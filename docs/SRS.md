@@ -47,3 +47,23 @@
 - **NFR-2 (Performance):** REST API endpoints must respond within 200 ms under typical academic demonstration loads.
 - **NFR-3 (Integrity):** Database transactions must ensure ACID compliance for berth slot bookings to avoid race conditions.
 - **NFR-4 (Compatibility):** Web interface must be responsive across standard modern browsers (Chrome, Edge, Firefox) using React 18+ and TypeScript.
+
+### 4. Introduction & Purpose
+This Software Requirements Specification (SRS) establishes the technical, operational, and architectural requirements for Coastal Horizon Dockyard. It governs the development of both the FastAPI REST backend and React TypeScript client.
+
+### 5. Scope
+The platform provides vessel registry, physical berth capacity inventory, docking allocation lifecycles, and maintenance clearance tracking.
+
+### 6. Users and Roles
+- **Dockyard Admin:** System administrator with complete system oversight and user configuration privileges.
+- **Port Operations Officer:** Operational authority managing physical berths, reviewing arrival requests, and assigning slots.
+- **Ship Agent:** Maritime client representative managing vessel profiles and submitting docking requests.
+
+### 7. Use Cases
+- **UC-1 (Manage Berths):** Port Officer or Admin adds/updates berth dimensions and marks operational status.
+- **UC-2 (Register Vessel):** Ship Agent registers IMO number, draft, and dimensions.
+- **UC-3 (Request & Allocate Slot):** Ship Agent requests a slot; Port Officer allocates an eligible berth.
+
+### 8. Acceptance Criteria
+- **AC-1:** Any CRUD operation on a berth or vessel must immediately reflect in the database and return accurate HTTP status codes (`201 Created`, `200 OK`, `204 No Content`, `404 Not Found`).
+- **AC-2:** Requests must be rejected with `422 Unprocessable Entity` if required validation parameters (e.g., non-positive dimensions, invalid IMO) are violated.

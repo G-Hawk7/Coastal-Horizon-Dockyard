@@ -88,3 +88,34 @@
 - `PATCH /api/v1/allocations/{id}/assign` — (Officer/Admin) Assigns a matching berth and approves.
 - `PATCH /api/v1/allocations/{id}/status` — (Officer/Admin) Updates vessel status (`DOCKED`, `MAINTENANCE`, `DEPARTED`).
 - `POST /api/v1/allocations/{id}/maintenance` — (Officer) Logs maintenance notes and sets clearance.
+
+### 4. Tech Stack Details
+- **Frontend:** React 18+, TypeScript, Vite, Tailwind CSS, TanStack Query / Axios.
+- **Backend:** Python 3.11+, FastAPI, Pydantic v2, SQLAlchemy 2.0 / SQLModel.
+- **Database:** Supabase (PostgreSQL) or SQLite (local development fallback).
+- **Tooling & Docs:** Swagger UI (`/docs`), Postman, Vercel CLI.
+
+### 5. Project Structure
+```text
+Coastal-Horizon-Dockyard/
+├── docs/
+│   ├── PRD.md
+│   ├── SRS.md
+│   └── TDD.md
+├── backend/
+│   ├── app/
+│   │   ├── api/
+│   │   ├── core/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   └── main.py
+│   ├── requirements.txt
+│   └── vercel.json
+└── frontend/
+    ├── src/
+    │   ├── components/
+    │   ├── pages/
+    │   ├── services/
+    │   └── App.tsx
+    ├── package.json
+    └── vite.config.ts

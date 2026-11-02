@@ -1,40 +1,56 @@
 # Product Requirements Document (PRD)
-## Coastal Horizon: Dockyard & Berth Management System
+## Coastal Horizon Dockyard Management System
 
-### 1. Executive Summary & Problem Statement
-Commercial dockyards face operational bottlenecks, berth contention, and safety compliance risks due to fragmented scheduling and manual communication between port authorities and shipping agencies. 
+---
 
-**Coastal Horizon** is a centralized, role-based dockyard management web platform designed to streamline vessel arrival requests, berth allocation, and maintenance turnarounds. It provides real-time operational status, enforces physical constraint checks (draft/length matching), and prevents schedule double-booking.
+## 1. Executive Summary
+Coastal Horizon Dockyard is a web-based maritime berth allocation and shipyard management platform. The application is engineered to eliminate manual tracking overhead, prevent physical dimension collisions (vessel draft and length exceeding physical slip thresholds), and provide real-time operational visibility over drydock and berth facilities.
 
-### 2. User Roles & Personas
-- **Ship Agent (Client):** External maritime representative responsible for registering vessels, requesting docking slots, and monitoring clearance status.
-- **Port Operations Officer (Operator):** Operational staff member managing dock traffic, evaluating vessel parameters, assigning berths, and logging vessel turnarounds.
-- **Dockyard Admin (Superuser):** System administrator overseeing physical berth infrastructure, auditing user activity, and managing user roles.
+---
 
-### 3. Core MVP Features
-- **Authentication & RBAC:** Secure JWT-based authentication with strict role permissions (`Ship Agent`, `Port Officer`, `Admin`).
-- **Vessel Profile Management:** Comprehensive registry of incoming vessels including IMO number, draft, length, and cargo type.
-- **Berth Inventory & Allocation Engine:** Physical slot registry with automated constraint validation (vessel draft $\le$ berth depth) to prevent conflicting reservations.
-- **Vessel Lifecycle Workflow:** State tracking across all major stages:
-  `REQUESTED` $\rightarrow$ `APPROVED` $\rightarrow$ `DOCKED` $\rightarrow$ `UNDER_MAINTENANCE` $\rightarrow$ `DEPARTED`.
-- **Maintenance & Clearance Logging:** Logging inspection notes and clearing vessels for departure.
+## 2. Problem Statement
+Traditional dockyards frequently suffer from operational miscoordinations:
+* **Over-allocation & Physical Mismatches:** Scheduling vessels into berths incapable of handling their draft or displacement causes costly grounding or quay damage.
+* **Lack of Real-time Visibility:** Harbor controllers lack instant, synchronized indicators of berth readiness, occupancy, and ongoing maintenance windows.
+* **Manual Bottlenecks:** Manual data logging via static spreadsheets results in stale records, race conditions, and scheduling conflicts.
 
-### 4. Non-Goals / Out of Scope (Future Work)
-- Real-time IoT sensor telemetry and automated crane hardware integration.
-- Direct credit card / gateway processing (financial tracking is recorded as billing ledger status only).
-- Machine learning or predictive AI models (all matching is rule-based and deterministic).
+---
 
-### 5. User Stories
-- **US-1:** As a Ship Agent, I want to register my vessel with its draft and length so that port authorities can evaluate docking compatibility.
-- **US-2:** As a Port Operations Officer, I want to list, create, and update berths so that I can maintain real-time physical capacity.
-- **US-3:** As an Admin, I want to oversee all system allocations and logs to ensure operational efficiency and audit compliance.
+## 3. User Personas
 
-### 6. Success Metrics
-- **Berth Utilization Rate:** Achieve $>80\%$ operational capacity tracking without schedule overlaps.
-- **API Response Latency:** P95 response times under 200 ms for all CRUD transactions.
-- **Zero Double-Bookings:** 100% prevention of dimensional or temporal berth conflicts.
+### Persona A: Dockyard Operations Controller (Harbor Master)
+* **Goal:** Real-time visibility into all shipyard berths and their current occupancy.
+* **Pain Points:** Spreadsheets with out-of-date entries; accidental double-booking of berths.
+* **Needs:** A unified dashboard to quickly check physical berth constraints, toggle maintenance cycles, and allocate docking spaces.
 
-### 7. Product Release Milestones
-- **Phase 1 (Foundation):** Core domain modeling, technical documentation, and environment setup.
-- **Phase 2 (MVP Release):** Implementation of core Berth Management CRUD operations, Supabase database integration, and initial REST API endpoints.
-- **Phase 3 (Full Platform Release):** Advanced vessel scheduling, full role-based access control (RBAC), and deployment validation.
+### Persona B: Ship Agent / Vessel Liaison
+* **Goal:** Secure immediate docking authorization and monitor physical slip readiness.
+* **Pain Points:** Unclear quay dimension criteria leading to delayed vessel berthing.
+* **Needs:** Explicit, programmatic confirmation that requested berths support the vessel's length and draft.
+
+---
+
+## 4. User Stories
+
+| ID | Persona | Story Description | Acceptance Criteria |
+|---|---|---|---|
+| **US-01** | Controller | As an operations controller, I want to view all physical berths along with their operational statuses (`AVAILABLE`, `OCCUPIED`, `UNDER_MAINTENANCE`) in real-time. | Berths are rendered dynamically with clear visual indicators matching backend state. |
+| **US-02** | Controller | As an operations controller, I want to create a new berth record with custom physical dimensions. | System validates that length and draft are positive numbers and saves the record to Supabase. |
+| **US-03** | Controller | As an operations controller, I want to cycle or update a berth's operational status with immediate UI feedback. | One-click status updates send an asynchronous PUT request, updating timestamps and card badges. |
+| **US-04** | Controller | As an operations controller, I want to decommission or delete obsolete berths from the shipyard. | A confirmation prompt prevents accidental deletion; deleting sends an HTTP `204 No Content` response and removes the card. |
+
+---
+
+## 5. Scope & Success Metrics (KPIs)
+
+### For the MVP (done so far for mid assessment)
+* End-to-end full-stack Berth CRUD implementation.
+* PostgreSQL database persistence via Supabase.
+* Fully connected REST API layer using FastAPI.
+* Reactive TypeScript UI built with Vite and React.
+* Production deployment configuration targeting Vercel.
+
+### Success Metrics
+* **Data Integrity:** 100% adherence to database schema constraints (e.g., unique berth identifiers, strictly typed status enums).
+* **API Responsiveness:** Average latency under 250ms for berth queries and status updates.
+* **Zero Client Runtime Errors:** Clean frontend state synchronization without unhandled network rejections or UI freezes.

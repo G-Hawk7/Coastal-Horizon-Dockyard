@@ -1,69 +1,65 @@
 # Software Requirements Specification (SRS)
-## Coastal Horizon: Dockyard & Berth Management System
-
-### 1. Functional Requirements (FRs)
-
-#### 1. Authentication & Access Control
-- **FR-1.1:** System shall authenticate users via OAuth2 Bearer tokens with encrypted JWTs.
-- **FR-1.2:** System shall enforce Role-Based Access Control (RBAC) across endpoints based on assigned roles (`Admin`, `Port Officer`, `Ship Agent`).
-- **FR-1.3:** Admin shall have exclusive permissions to modify user roles and activate/deactivate accounts.
-
-#### 2. Vessel Registry
-- **FR-2.1:** Ship Agents shall be able to register new vessel profiles with Name, IMO Number, Vessel Type, Length (meters), and Draft Depth (meters).
-- **FR-2.2:** System shall enforce unique IMO numbers globally across all registered vessels.
-- **FR-2.3:** Ship Agents can view and edit only vessels belonging to their account; Port Officers and Admins can view all vessels.
-
-#### 3. Berth Management & Allocation
-- **FR-3.1:** Admin shall create and manage berths, specifying Berth Number, Maximum Length Capacity, and Maximum Draft Depth.
-- **FR-3.2:** Ship Agents shall submit docking requests specifying target Vessel ID, Expected Arrival, and Expected Departure.
-- **FR-3.3:** The allocation engine must reject assigning a berth if the vessel length or draft exceeds berth capacity.
-- **FR-3.4:** The allocation engine must reject assigning a berth if another vessel is already allocated to the same berth during the requested time window.
-
-#### 4. Operational Turnaround & Maintenance
-- **FR-4.1:** Port Officers shall transition allocation status through valid states: `APPROVED` $\rightarrow$ `DOCKED` $\rightarrow$ `UNDER_MAINTENANCE` $\rightarrow$ `DEPARTED`.
-- **FR-4.2:** Port Officers shall log maintenance inspection reports with description, issue severity, and clearance status.
-- **FR-4.3:** System shall prevent marking a vessel as `DEPARTED` until all active maintenance items are marked as cleared.
+## Coastal Horizon Dockyard Management System
 
 ---
 
-### 2. RBAC Permission Matrix
+## 1. Introduction
 
-| Resource / Scope | Admin | Port Operations Officer | Ship Agent |
-| :--- | :---: | :---: | :---: |
-| `auth:user:manage` | Read / Write | None | None |
-| `berth:manage` | Read / Write | Read | Read |
-| `berth:allocate` | Read / Write | Read / Write | None |
-| `vessel:read` | All | All | Own Only |
-| `vessel:create` | Yes | Yes | Yes |
-| `vessel:update` | Yes | Yes | Own Only |
-| `docking:request` | Read / Write | Read | Create (Own) |
-| `docking:status_update` | Yes | Yes | None |
-| `maintenance:log` | Read / Write | Read / Write | Read (Own) |
+### 1.1 Purpose
+This document specifies the software requirements for the Coastal Horizon Dockyard Berth Management MVP. It details the functional, non-functional, and interface requirements for academic and operational evaluation.
+
+### 1.2 System Overview
+The system implements a three-tier decoupled client-server architecture:
+* **Presentation Tier:** Single Page Application (SPA) built with React 19, TypeScript, and Vite.
+* **Application Tier:** Asynchronous REST API developed using Python 3.12+ and FastAPI.
+* **Persistence Tier:** Cloud-managed PostgreSQL relational database provisioned on Supabase.
 
 ---
 
-### 3. Non-Functional Requirements (NFRs)
-- **NFR-1 (Security):** Passwords hashed using bcrypt or Argon2id. Tokens expire after 60 minutes with separate refresh tokens.
-- **NFR-2 (Performance):** REST API endpoints must respond within 200 ms under typical academic demonstration loads.
-- **NFR-3 (Integrity):** Database transactions must ensure ACID compliance for berth slot bookings to avoid race conditions.
-- **NFR-4 (Compatibility):** Web interface must be responsive across standard modern browsers (Chrome, Edge, Firefox) using React 18+ and TypeScript.
+## 2. Functional Requirements (FR)
 
-### 4. Introduction & Purpose
-This Software Requirements Specification (SRS) establishes the technical, operational, and architectural requirements for Coastal Horizon Dockyard. It governs the development of both the FastAPI REST backend and React TypeScript client.
+### 2.1 Berth Management Module
 
-### 5. Scope
-The platform provides vessel registry, physical berth capacity inventory, docking allocation lifecycles, and maintenance clearance tracking.
+* **FR-1.1: Berth Creation (`POST /api/v1/berths`)**
+  * The system must allow users to register a new berth by providing `berth_number`, `max_length_meters`, and `max_draft_meters`.
+  * The system must validate that `berth_number` is non-empty and unique across the dockyard.
+  * The system must validate that `max_length_meters` and `max_draft_meters` are strictly positive floating-point numbers.
+  * The default initial status must be set to `AVAILABLE` unless specified otherwise.
 
-### 6. Users and Roles
-- **Dockyard Admin:** System administrator with complete system oversight and user configuration privileges.
-- **Port Operations Officer:** Operational authority managing physical berths, reviewing arrival requests, and assigning slots.
-- **Ship Agent:** Maritime client representative managing vessel profiles and submitting docking requests.
+* **FR-1.2: Berth Retrieval (`GET /api/v1/berths`)**
+  * The system must return an array of all active berths serialized as JSON objects.
+  * Each record must return: `id` (UUID), `berth_number`, `max_length_meters`, `max_draft_meters`, `status`, `created_at`, and `updated_at`.
 
-### 7. Use Cases
-- **UC-1 (Manage Berths):** Port Officer or Admin adds/updates berth dimensions and marks operational status.
-- **UC-2 (Register Vessel):** Ship Agent registers IMO number, draft, and dimensions.
-- **UC-3 (Request & Allocate Slot):** Ship Agent requests a slot; Port Officer allocates an eligible berth.
+* **FR-1.3: Berth Update (`PUT /api/v1/berths/{id}`)**
+  * The system must allow partial or complete updates to an existing berth using its primary key UUID.
+  * Allowed status transitions are strictly constrained to: `AVAILABLE`, `OCCUPIED`, and `UNDER_MAINTENANCE`.
+  * The system must update the `updated_at` timestamp column upon successful modification.
 
-### 8. Acceptance Criteria
-- **AC-1:** Any CRUD operation on a berth or vessel must immediately reflect in the database and return accurate HTTP status codes (`201 Created`, `200 OK`, `204 No Content`, `404 Not Found`).
-- **AC-2:** Requests must be rejected with `422 Unprocessable Entity` if required validation parameters (e.g., non-positive dimensions, invalid IMO) are violated.
+* **FR-1.4: Berth Deletion (`DELETE /api/v1/berths/{id}`)**
+  * The system must remove the corresponding berth record from the persistence tier when requested by a valid UUID.
+  * The endpoint must return an HTTP `204 No Content` status code upon successful deletion.
+  * If the berth UUID does not exist, the system must return an HTTP `404 Not Found` response.
+
+---
+
+## 3. Non-Functional Requirements (NFR)
+
+* **NFR-01: Performance & Concurrency:** The backend must handle asynchronous I/O via Uvicorn ASGI to manage concurrent read/write queries with database connection pooling.
+* **NFR-02: Security & CORS:** The API must explicitly regulate origins via `fastapi.middleware.cors.CORSMiddleware`, permitting local development environments (`http://localhost:5173`) and designated production client domains.
+* **NFR-03: Reliability & Data Validation:** Input validation must be strictly enforced at the application boundary via Pydantic schemas before reaching the database query execution layer.
+* **NFR-04: Portability:** The platform must be buildable across major operating systems (Windows, Linux, macOS) and container/serverless environments.
+
+---
+
+## 4. External Interface Requirements
+
+### 4.1 User Interface
+* Responsive dashboard layout supporting screen resolutions from 360px (mobile) to 1920px+ (desktop).
+* Visual cues with distinct color codings for operational statuses:
+  * `AVAILABLE`: Soft Green (`#dcfce7` / `#166534`)
+  * `OCCUPIED`: Soft Red (`#fee2e2` / `#991b1b`)
+  * `UNDER_MAINTENANCE`: Soft Amber (`#fef3c7` / `#92400e`)
+
+### 4.2 Software Interfaces
+* **ORM:** SQLAlchemy 2.0 mapped to Supabase PostgreSQL database pooler.
+* **HTTP Client:** Axios configured with centralized `baseURL` and JSON payload headers.

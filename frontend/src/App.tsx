@@ -21,8 +21,14 @@ export default function App() {
       setLoading(true);
       setError(null);
       const data = await fetchBerths();
-      setBerths(data);
+      // Ensure data is strictly a valid array before updating state
+      if (Array.isArray(data)) {
+        setBerths(data);
+      } else {
+        setBerths([]);
+      }
     } catch (err: unknown) {
+      setBerths([]); // Maintain empty array on failure
       if (err instanceof Error) {
         setError(err.message);
       } else {
@@ -99,7 +105,7 @@ export default function App() {
 
       {/* Quick Add Section */}
       <section style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', margin: '24px 0', border: '1px solid #e2e8f0' }}>
-        <h3 style={{ margin: '0 0 16px 0', fontSize: '16px' }}>Add New Berth</h3>
+        <h3 style={{ margin: '0 0 16px 0', fontSize: '16px', color: '#0f172a' }}>Add New Berth</h3>
         <form onSubmit={handleCreate} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
           <input
             type="text"
@@ -107,7 +113,7 @@ export default function App() {
             value={formData.berth_number}
             onChange={(e) => setFormData({ ...formData, berth_number: e.target.value })}
             required
-            style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #cbd5e1' }}
+            style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#0f172a' }}
           />
           <input
             type="number"
@@ -116,7 +122,7 @@ export default function App() {
             value={formData.max_length_meters}
             onChange={(e) => setFormData({ ...formData, max_length_meters: parseFloat(e.target.value) || 0 })}
             required
-            style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: 'ffffff', color: '#0f172a', width: '130px' }}
+            style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#0f172a', width: '130px' }}
           />
           <input
             type="number"
@@ -125,7 +131,7 @@ export default function App() {
             value={formData.max_draft_meters}
             onChange={(e) => setFormData({ ...formData, max_draft_meters: parseFloat(e.target.value) || 0 })}
             required
-            style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: 'ffffff', color: '#0f172a', width: '130px' }}
+            style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #cbd5e1', backgroundColor: '#ffffff', color: '#0f172a', width: '130px' }}
           />
           <button
             type="submit"
@@ -149,10 +155,12 @@ export default function App() {
 
       {/* Grid Display */}
       {loading ? (
-        <p>Loading dockyard records...</p>
+        <p style={{ color: '#94a3b8' }}>Loading dockyard records...</p>
       ) : error ? (
-        <p style={{ color: 'red' }}>{error}</p>
-      ) : (
+        <div style={{ padding: '16px', borderRadius: '6px', backgroundColor: '#fee2e2', color: '#991b1b', border: '1px solid #f87171' }}>
+          <p style={{ margin: 0, fontWeight: 600 }}>Error loading berths: {error}</p>
+        </div>
+      ) : Array.isArray(berths) && berths.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
           {berths.map((berth) => (
             <div
@@ -166,10 +174,11 @@ export default function App() {
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>{berth.berth_number}</h3>
+                <h3 style={{ margin: 0, color: '#0f172a' }}>{berth.berth_number}</h3>
                 <button
                   onClick={() => handleDelete(berth.id)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444' }}
+                  title="Delete Berth"
                 >
                   <Trash2 size={18} />
                 </button>
@@ -214,6 +223,10 @@ export default function App() {
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div style={{ padding: '32px', textAlign: 'center', background: '#1e293b', borderRadius: '8px', color: '#94a3b8' }}>
+          <p style={{ margin: 0 }}>No berths found in the dockyard. Use the form above to add one.</p>
         </div>
       )}
     </div>

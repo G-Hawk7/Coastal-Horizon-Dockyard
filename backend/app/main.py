@@ -9,7 +9,10 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Coastal Horizon Dockyard API",
     description="Berth and Dockyard Management REST API",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # Enable CORS for frontend integration

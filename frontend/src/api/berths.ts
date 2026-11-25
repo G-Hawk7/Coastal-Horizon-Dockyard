@@ -1,39 +1,49 @@
-import { apiClient } from './client';
+import apiClient from './client';
+import type {
+  Berth,
+  BerthCreatePayload,
+  BerthUpdatePayload,
+} from '../types';
 
-export interface Berth {
-  id: string;
-  berth_number: string;
-  max_length_meters: number;
-  max_draft_meters: number;
-  status: 'AVAILABLE' | 'OCCUPIED' | 'UNDER_MAINTENANCE';
-  created_at?: string;
-  updated_at?: string;
+export interface BerthListParams {
+  group_id?: string;
+  status?: string;
+  search?: string;
 }
 
-export type BerthCreate = {
-  berth_number: string;
-  max_length_meters: number;
-  max_draft_meters: number;
-  status: 'AVAILABLE' | 'OCCUPIED' | 'UNDER_MAINTENANCE';
-};
+export const berthsApi = {
+  async list(params?: BerthListParams): Promise<Berth[]> {
+    const cleanParams = Object.fromEntries(
+      Object.entries(params ?? {}).filter(([, v]) => v !== undefined && v !== '')
+    );
+    const { data } = await apiClient.get<Berth[]>('/berths', { params: cleanParams });
+    return data;
+  },
 
-export type BerthUpdate = Partial<BerthCreate>;
+  async getById(berthId: string): Promise<Berth> {
+    const { data } = await apiClient.get<Berth>(`/berths/${berthId}`);
+    return data;
+  },
 
-export const fetchBerths = async (): Promise<Berth[]> => {
-  const response = await apiClient.get<Berth[]>('/berths');
-  return response.data;
-};
+  async create(payload: BerthCreatePayload): Promise<Berth> {
+    const { data } = await apiClient.post<Berth>('/berths', payload);
+    return data;
+  },
 
-export const createBerth = async (data: BerthCreate): Promise<Berth> => {
-  const response = await apiClient.post<Berth>('/berths', data);
-  return response.data;
-};
+  async update(berthId: string, payload: BerthUpdatePayload): Promise<Berth> {
+    const { data } = await apiClient.patch<Berth>(`/berths/${berthId}`, payload);
+    return data;
+  },
 
-export const updateBerth = async (id: string, data: BerthUpdate): Promise<Berth> => {
-  const response = await apiClient.put<Berth>(`/berths/${id}`, data);
-  return response.data;
-};
+  async assign(berthId: string, assignedToId: string | null): Promise<Berth> {
+    const { data } = await apiClient.patch<Berth>(`/berths/${berthId}/assign`, {
+      assigned_to_id: assignedToId,
+    });
+    return data;
+  },
 
-export const deleteBerth = async (id: string): Promise<void> => {
-  await apiClient.delete(`/berths/${id}`);
+  async remove(berthId: string): Promise<{ message: string }> {
+    const { data } = await apiClient.delete<{ message: string }>(`/berths/${berthId}`);
+    return data;
+  },
 };
